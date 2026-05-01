@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Reel Notes">
+<title>Reel Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060608;
+    --surface: #0D0D14;
+    --surface2: #12121C;
+    --border: #1A1A2E;
+    --accent: #00E5A0;
+    --accent2: #5B4FE8;
+    --accent3: #FF4D6D;
+    --gold: #FFB930;
+    --text: #F0EEF8;
+    --muted: #52506A;
+    --muted2: #9290AA;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; min-height: 100svh; overflow-x: hidden; }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 999; opacity: 0.5;
+  }
+  .orb { position: fixed; border-radius: 50%; filter: blur(90px); pointer-events: none; z-index: 0; }
+  .orb1 { width: 280px; height: 280px; background: #00E5A014; top: -60px; left: -60px; }
+  .orb2 { width: 220px; height: 220px; background: #5B4FE810; bottom: 80px; right: -60px; }
+  .app {
+    position: relative; z-index: 1; max-width: 480px; margin: 0 auto;
+    padding: calc(var(--safe-top) + 20px) 20px calc(var(--safe-bottom) + 48px);
+    min-height: 100svh;
+  }
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; padding-top: 6px; }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), #00B8FF);
+    border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    font-size: 19px; box-shadow: 0 4px 24px #00E5A025;
+  }
+  .logo-name { font-size: 18px; font-weight: 800; letter-spacing: -0.03em; }
+  .logo-tag { font-size: 9px; color: var(--accent); font-family: 'DM Mono', monospace; letter-spacing: 0.1em; margin-top: 1px; }
+  .key-btn {
+    font-family: 'DM Mono', monospace; font-size: 10px; padding: 6px 12px;
+    border-radius: 20px; border: 1px solid var(--border);
+    color: var(--muted); background: var(--surface); cursor: pointer; transition: all 0.2s;
+  }
+  .key-btn.active { border-color: var(--accent); color: var(--accent); }
+  .key-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 18px; display: none; }
+  .key-panel.open { display: block; animation: drop 0.18s ease; }
+  @keyframes drop { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+  .plabel { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+  .phint { font-size: 12px; color: var(--muted2); line-height: 1.55; margin-bottom: 12px; }
+  .phint a { color: var(--accent); text-decoration: none; }
+  .free-badge {
+    display: inline-block; background: #00E5A015; border: 1px solid #00E5A030;
+    border-radius: 20px; padding: 3px 10px; font-size: 10px; color: var(--accent);
+    font-family: 'DM Mono', monospace; margin-bottom: 12px;
+  }
+  input[type="password"], input[type="text"], textarea {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; font-size: 14px; color: var(--text);
+    outline: none; font-family: 'DM Mono', monospace; -webkit-appearance: none; transition: border-color 0.2s;
+  }
+  input:focus, textarea:focus { border-color: var(--accent2); }
+  textarea { font-family: 'Syne', sans-serif; resize: none; line-height: 1.6; }
+  .save-btn { width: 100%; margin-top: 10px; padding: 12px; background: var(--accent2); border: none; border-radius: 10px; color: #fff; font-size: 13px; font-weight: 700; font-family: 'Syne', sans-serif; cursor: pointer; }
+  .model-row { display: flex; gap: 6px; margin-bottom: 14px; }
+  .model-chip {
+    flex: 1; padding: 8px 4px; text-align: center;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; font-size: 11px; font-weight: 700;
+    color: var(--muted); cursor: pointer; transition: all 0.15s; font-family: 'DM Mono', monospace;
+  }
+  .model-chip.active { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+  .tabs { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 4px; margin-bottom: 14px; gap: 2px; }
+  .tab { flex: 1; padding: 9px 6px; border: none; border-radius: 9px; background: transparent; color: var(--muted); font-size: 12px; font-weight: 700; font-family: 'Syne', sans-serif; cursor: pointer; transition: all 0.15s; }
+  .tab.active { background: var(--accent3); color: #fff; box-shadow: 0 2px 12px #FF4D6D30; }
+  .input-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px; transition: border-color 0.2s; }
+  .input-card:focus-within { border-color: var(--accent2); }
+  .ilabel { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+  .go-btn {
+    width: 100%; padding: 16px;
+    background: linear-gradient(135deg, var(--accent), #00B8FF);
+    border: none; border-radius: 14px; color: #060608;
+    font-size: 16px; font-weight: 800; font-family: 'Syne', sans-serif;
+    cursor: pointer; letter-spacing: -0.01em;
+    box-shadow: 0 4px 28px #00E5A028; transition: transform 0.1s;
+    margin-bottom: 26px; -webkit-appearance: none;
+  }
+  .go-btn:active { transform: scale(0.98); }
+  .go-btn:disabled { background: var(--surface2); color: var(--muted); box-shadow: none; }
+  .loading { display: none; text-align: center; padding: 44px 20px; }
+  .loading.show { display: block; }
+  .ring { width: 46px; height: 46px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.75s linear infinite; margin: 0 auto 14px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .ltext { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted2); letter-spacing: 0.05em; }
+  .lstep { margin-top: 8px; font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .err { display: none; background: #100508; border: 1px solid #3D0F1E; border-radius: 12px; padding: 13px 15px; margin-bottom: 14px; font-size: 13px; color: #FF7090; line-height: 1.5; }
+  .err.show { display: block; }
+  .results { display: none; }
+  .results.show { display: block; animation: up 0.28s ease; }
+  @keyframes up { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  .title-card { background: linear-gradient(135deg, #080414, #050C10); border: 1px solid #00E5A020; border-radius: 18px; padding: 22px 18px; margin-bottom: 12px; position: relative; overflow: hidden; }
+  .title-card::after { content: ''; position: absolute; top:-50px; right:-50px; width: 130px; height: 130px; background: radial-gradient(circle, #00E5A015, transparent 70%); pointer-events: none; }
+  .ctype { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.15em; color: var(--accent); text-transform: uppercase; margin-bottom: 8px; }
+  .rtitle { font-size: 19px; font-weight: 800; letter-spacing: -0.025em; line-height: 1.25; margin-bottom: 10px; }
+  .midea { font-size: 13px; color: var(--muted2); line-height: 1.65; }
+  .sec { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px 14px; margin-bottom: 10px; }
+  .sec-head { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .pt { display: flex; gap: 11px; margin-bottom: 10px; align-items: flex-start; }
+  .pn { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; font-family: 'DM Mono', monospace; flex-shrink: 0; margin-top: 1px; }
+  .ptx { font-size: 13px; color: #D5D3EE; line-height: 1.6; flex: 1; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 11px; font-size: 11px; color: var(--muted2); font-family: 'DM Mono', monospace; }
+  .qline { border-left: 2px solid var(--gold); padding-left: 13px; margin-bottom: 9px; font-size: 13px; color: #E8D9A0; font-style: italic; line-height: 1.6; }
+  .otext { font-size: 13px; color: var(--muted2); line-height: 1.75; white-space: pre-line; }
+  .ttext { font-size: 11px; color: var(--muted); line-height: 1.8; font-family: 'DM Mono', monospace; max-height: 180px; overflow-y: auto; white-space: pre-wrap; display: none; }
+  .tog { background: none; border: none; color: var(--accent); font-size: 11px; font-weight: 700; font-family: 'DM Mono', monospace; cursor: pointer; padding: 0; margin-top: 2px; letter-spacing: 0.03em; }
+  .dl-btn { width: 100%; padding: 14px; background: transparent; border: 1px solid var(--border); border-radius: 14px; color: var(--text); font-size: 14px; font-weight: 700; font-family: 'Syne', sans-serif; cursor: pointer; margin-top: 6px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; -webkit-appearance: none; }
+  .dl-btn:active { background: var(--surface); }
+  .reset-btn { width: 100%; padding: 13px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; color: var(--muted2); font-size: 13px; font-weight: 600; font-family: 'Syne', sans-serif; cursor: pointer; margin-bottom: 40px; -webkit-appearance: none; }
+</style>
+</head>
+<body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="app">
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">📲</div>
+      <div>
+        <div class="logo-name">Reel Notes</div>
+        <div class="logo-tag">POWERED BY GROQ · FREE</div>
+      </div>
+    </div>
+    <div class="key-btn" id="keyBtn" onclick="togglePanel()">⚙ API KEY</div>
+  </div>
+  <div class="key-panel" id="keyPanel">
+    <div class="plabel">Groq API Key</div>
+    <div class="free-badge">✦ 100% FREE — no credit card ever</div>
+    <div class="phint">Get your free key at <a href="https://console.groq.com" target="_blank">console.groq.com</a><br>Sign up with email only. Key stored on your device only.</div>
+    <input type="password" id="keyInput" placeholder="gsk_..." />
+    <button class="save-btn" onclick="saveKey()">Save Key</button>
+  </div>
+  <div class="model-row">
+    <div class="model-chip active" onclick="setModel('llama-3.3-70b-versatile',this)">Llama 3.3<br><span style="font-size:9px;opacity:0.7">Best quality</span></div>
+    <div class="model-chip" onclick="setModel('llama-3.1-8b-instant',this)">Llama 3.1<br><span style="font-size:9px;opacity:0.7">Fastest</span></div>
+    <div class="model-chip" onclick="setModel('mixtral-8x7b-32768',this)">Mixtral<br><span style="font-size:9px;opacity:0.7">Balanced</span></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="setMode('transcript',this)">📝 Transcript</button>
+    <button class="tab" onclick="setMode('url',this)">🔗 URL</button>
+  </div>
+  <div class="input-card" id="tcCard">
+    <div class="ilabel">Paste transcript</div>
+    <textarea id="tcInput" rows="7" placeholder="Paste the video transcript here…"></textarea>
+  </div>
+  <div class="input-card" id="urlCard" style="display:none">
+    <div class="ilabel">Instagram Reel URL</div>
+    <input type="text" id="urlInput" placeholder="https://www.instagram.com/reel/…" />
+  </div>
+  <button class="go-btn" id="goBtn" onclick="analyze()">✦ Extract Notes</button>
+  <div class="err" id="errBox"></div>
+  <div class="loading" id="loading">
+    <div class="ring"></div>
+    <div class="ltext" id="ltext">Analyzing with Llama 3.3…</div>
+    <div class="lstep" id="lstep">Connecting to Groq</div>
+  </div>
+  <div class="results" id="results"></div>
+</div>
+<script>
+const PROMPT = `You are an expert content analyst for social media video content. Analyze the provided content and extract structured notes. Return ONLY raw valid JSON — no markdown fences, no preamble, no explanation whatsoever. {"title":"Short descriptive title (max 8 words)","contentType":"Educational / Motivational / Tutorial / Commentary / Entertainment / Other","mainIdea":"One clear sentence summarizing the core message","keyPoints":["point 1","point 2","up to 7 key points"],"actionSteps":["step 1","if not applicable use empty array"],"notableQuotes":["quote 1","if not applicable use empty array"],"topicsThemes":["topic 1","topic 2","3 to 6 topics"],"overallNotes":"2-3 paragraph synthesis","fullTranscript":"The transcript as provided"}`;
+let mode='transcript',model='llama-3.3-70b-versatile',notes=null;
+function getKey(){return localStorage.getItem('groq_key')||'';}
+function saveKey(){const v=document.getElementById('keyInput').value.trim();if(!v)return;localStorage.setItem('groq_key',v);updateBadge();document.getElementById('keyPanel').classList.remove('open');toast('Key saved ✓');}
+function updateBadge(){const b=document.getElementById('keyBtn');if(getKey()){b.textContent='✓ KEY SET';b.classList.add('active');}else{b.textContent='⚙ API KEY';b.classList.remove('active');}}
+function togglePanel(){const p=document.getElementById('keyPanel');p.classList.toggle('open');if(p.classList.contains('open'))document.getElementById('keyInput').value=getKey();}
+function setModel(m,el){model=m;document.querySelectorAll('.model-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');}
+function setMode(m,el){mode=m;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('tcCard').style.display=m==='transcript'?'block':'none';document.getElementById('urlCard').style.display=m==='url'?'block':'none';}
+async function analyze(){
+  const key=getKey();
+  if(!key){showErr('Tap ⚙ API KEY and add your free Groq key first.');togglePanel();return;}
+  const input=mode==='transcript'?document.getElementById('tcInput').value.trim():document.getElementById('urlInput').value.trim();
+  if(!input){showErr('Please add content first.');return;}
+  hideErr();setLoad(true);document.getElementById('results').classList.remove('show');document.getElementById('goBtn').disabled=true;
+  const steps=['Connecting to Groq','Reading content…','Extracting key points…','Building your notes…'];
+  let si=0;const iv=setInterval(()=>{document.getElementById('lstep').textContent=steps[++si%steps.length];},1800);
+  try{
+    const msg=mode==='url'?`Analyze this Instagram Reel URL and extract structured notes: ${input}`:`Analyze this transcript and extract structured notes:\n\n${input}`;
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},body:JSON.stringify({model,temperature:0.3,max_tokens:2000,messages:[{role:'system',content:PROMPT},{role:'user',content:msg}]})});
+    if(!res.ok){const e=await res.json().catch(()=>({}));if(res.status===401)throw new Error('Invalid API key. Check console.groq.com');if(res.status===429)throw new Error('Rate limit hit. Wait a moment and try again.');throw new Error(e.error?.message||`Error ${res.status}`);}
+    const data=await res.json();
+    const raw=(data.choices?.[0]?.message?.content||'').trim().replace(/```json|```/g,'').trim();
+    notes=JSON.parse(raw);render(notes);
+  }catch(e){showErr(e.message||'Something went wrong.');}
+  finally{clearInterval(iv);setLoad(false);document.getElementById('goBtn').disabled=false;}
+}
+function render(n){
+  const c={p:'#5B4FE8',a:'#00E5A0',q:'#FFB930'};
+  let h=`<div class="title-card"><div class="ctype">${x(n.contentType)}</div><div class="rtitle">${x(n.title)}</div><div class="midea">${x(n.mainIdea)}</div></div>`;
+  if(n.keyPoints?.length){h+=`<div class="sec"><div class="sec-head" style="color:${c.p}"><div class="dot" style="background:${c.p}"></div>KEY POINTS</div>`;n.keyPoints.forEach((p,i)=>h+=`<div class="pt"><div class="pn" style="background:${c.p}20;color:${c.p}">${i+1}</div><div class="ptx">${x(p)}</div></div>`);h+=`</div>`;}
+  if(n.topicsThemes?.length){h+=`<div class="sec"><div class="sec-head" style="color:var(--muted2)"><div class="dot" style="background:var(--muted)"></div>TOPICS & THEMES</div><div class="tags">`;n.topicsThemes.forEach(t=>h+=`<div class="tag">${x(t)}</div>`);h+=`</div></div>`;}
+  if(n.actionSteps?.length){h+=`<div class="sec"><div class="sec-head" style="color:${c.a}"><div class="dot" style="background:${c.a}"></div>ACTION STEPS</div>`;n.actionSteps.forEach((s,i)=>h+=`<div class="pt"><div class="pn" style="background:${c.a}20;color:${c.a}">${i+1}</div><div class="ptx">${x(s)}</div></div>`);h+=`</div>`;}
+  if(n.notableQuotes?.length){h+=`<div class="sec"><div class="sec-head" style="color:${c.q}"><div class="dot" style="background:${c.q}"></div>NOTABLE QUOTES</div>`;n.notableQuotes.forEach(q=>h+=`<div class="qline">"${x(q)}"</div>`);h+=`</div>`;}
+  h+=`<div class="sec"><div class="sec-head" style="color:#FF8A50"><div class="dot" style="background:#FF8A50"></div>OVERALL NOTES</div><div class="otext">${x(n.overallNotes)}</div></div>`;
+  h+=`<div class="sec"><div class="sec-head" style="color:var(--muted)"><div class="dot" style="background:var(--muted)"></div>FULL TRANSCRIPT</div><div class="ttext" id="tblock">${x(n.fullTranscript||'')}</div><button class="tog" onclick="togT(this)">Show transcript ↓</button></div>`;
+  h+=`<button class="dl-btn" onclick="dl()">↓ Download Notes (.txt)</button><button class="reset-btn" onclick="reset()">↺ Analyze Another Reel</button>`;
+  const r=document.getElementById('results');r.innerHTML=h;r.classList.add('show');r.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function togT(btn){const b=document.getElementById('tblock'),s=b.style.display!=='none';b.style.display=s?'none':'block';btn.textContent=s?'Show transcript ↓':'Hide transcript ↑';}
+function dl(){if(!notes)return;const n=notes,sep='='.repeat(56),line='-'.repeat(40),date=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});let t=[sep,`  REEL NOTES — ${(n.title||'').toUpperCase()}`,sep,`  Model: ${model}`,`  Analyzed: ${date}`,line,'','MAIN IDEA',line,n.mainIdea,'','KEY POINTS',line,...(n.keyPoints?.map((p,i)=>`  ${i+1}. ${p}`)||[]),'','TOPICS',line,...(n.topicsThemes?.map(t=>`  • ${t}`)||[])];if(n.actionSteps?.length){t.push('','ACTION STEPS',line);n.actionSteps.forEach((s,i)=>t.push(`  ${i+1}. ${s}`));}if(n.notableQuotes?.length){t.push('','QUOTES',line);n.notableQuotes.forEach(q=>t.push(`  "${q}"`));}t.push('','OVERALL NOTES',line,n.overallNotes,'','TRANSCRIPT',line,n.fullTranscript||'','',sep);const blob=new Blob([t.join('\n')],{type:'text/plain'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`reel-notes-${(n.title||'notes').toLowerCase().replace(/\s+/g,'-')}.txt`;a.click();URL.revokeObjectURL(url);}
+function x(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function setLoad(v){document.getElementById('loading').classList.toggle('show',v);}
+function showErr(m){const b=document.getElementById('errBox');b.textContent=m;b.classList.add('show');}
+function hideErr(){document.getElementById('errBox').classList.remove('show');}
+function reset(){document.getElementById('tcInput').value='';document.getElementById('urlInput').value='';const r=document.getElementById('results');r.classList.remove('show');r.innerHTML='';hideErr();notes=null;window.scrollTo({top:0,behavior:'smooth'});}
+function toast(m){const t=document.createElement('div');t.textContent=m;Object.assign(t.style,{position:'fixed',bottom:'32px',left:'50%',transform:'translateX(-50%)',background:'#1A1A2E',border:'1px solid #2A2A44',borderRadius:'20px',padding:'9px 18px',fontSize:'12px',color:'#fff',zIndex:'9999'});document.body.appendChild(t);setTimeout(()=>t.remove(),2200);}
+updateBadge();
+</script>
+</body>
+</html>
